@@ -6,7 +6,7 @@ import * as schema from "../db/schema.js";
 let dbInstance;
 
 /** Neon's serverless driver uses HTTP; strip channel_binding (TCP SCRAM option) to avoid connection errors. */
-function sanitizeNeonDatabaseUrl(url) {
+export function sanitizeNeonDatabaseUrl(url) {
   const q = url.indexOf("?");
   if (q === -1) return url;
   const base = url.slice(0, q);

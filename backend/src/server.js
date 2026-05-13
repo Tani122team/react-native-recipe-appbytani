@@ -1,6 +1,8 @@
 import express from "express";
+import cors from "cors";
 import { ENV } from "./config/env.js";
 import { getDb } from "./config/db.js";
+import { runMigrations } from "./config/migrate.js";
 import { favoritesTable } from "./db/schema.js";
 import { and, eq } from "drizzle-orm";
 import job from "./config/cron.js";
@@ -8,8 +10,15 @@ import job from "./config/cron.js";
 const app = express();
 const PORT = ENV.PORT || 5001;
 
-if (ENV.NODE_ENV === "production") job.start();
+await runMigrations();
 
+if (ENV.NODE_ENV === "production" && process.env.API_URL) {
+  job.start();
+} else if (ENV.NODE_ENV === "production") {
+  console.warn("API_URL not set; keepalive cron disabled");
+}
+
+app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
 app.get("/api/health", (req, res) => {
