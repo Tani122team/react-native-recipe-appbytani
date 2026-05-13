@@ -3,5 +3,15 @@ import { neon } from "@neondatabase/serverless";
 import { ENV } from "./env.js";
 import * as schema from "../db/schema.js";
 
-const sql = neon(ENV.DATABASE_URL);
-export const db = drizzle(sql, { schema });
+let dbInstance;
+
+/** Lazily connect so the process can boot (e.g. /api/health) before DATABASE_URL is set. */
+export function getDb() {
+  if (!ENV.DATABASE_URL) {
+    return null;
+  }
+  if (!dbInstance) {
+    dbInstance = drizzle(neon(ENV.DATABASE_URL), { schema });
+  }
+  return dbInstance;
+}

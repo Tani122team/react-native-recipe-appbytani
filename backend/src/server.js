@@ -1,6 +1,6 @@
 import express from "express";
 import { ENV } from "./config/env.js";
-import { db } from "./config/db.js";
+import { getDb } from "./config/db.js";
 import { favoritesTable } from "./db/schema.js";
 import { and, eq } from "drizzle-orm";
 import job from "./config/cron.js";
@@ -13,11 +13,19 @@ if (ENV.NODE_ENV === "production") job.start();
 app.use(express.json());
 
 app.get("/api/health", (req, res) => {
-  res.status(200).json({ success: true });
+  res.status(200).json({
+    success: true,
+    database: Boolean(ENV.DATABASE_URL),
+  });
 });
 
 app.post("/api/favorites", async (req, res) => {
   try {
+    const db = getDb();
+    if (!db) {
+      return res.status(503).json({ error: "DATABASE_URL is not configured" });
+    }
+
     const { userId, recipeId, title, image, cookTime, servings } = req.body;
 
     if (!userId || !recipeId || !title) {
@@ -45,6 +53,11 @@ app.post("/api/favorites", async (req, res) => {
 
 app.get("/api/favorites/:userId", async (req, res) => {
   try {
+    const db = getDb();
+    if (!db) {
+      return res.status(503).json({ error: "DATABASE_URL is not configured" });
+    }
+
     const { userId } = req.params;
 
     const userFavorites = await db
@@ -61,6 +74,11 @@ app.get("/api/favorites/:userId", async (req, res) => {
 
 app.delete("/api/favorites/:userId/:recipeId", async (req, res) => {
   try {
+    const db = getDb();
+    if (!db) {
+      return res.status(503).json({ error: "DATABASE_URL is not configured" });
+    }
+
     const { userId, recipeId } = req.params;
 
     await db
@@ -76,6 +94,6 @@ app.delete("/api/favorites/:userId/:recipeId", async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, "0.0.0.0", () => {
   console.log("Server is running on PORT:", PORT);
 });
