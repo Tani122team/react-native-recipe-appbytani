@@ -21,6 +21,10 @@ if (ENV.NODE_ENV === "production" && process.env.API_URL) {
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
 
+app.get("/", (_req, res) => {
+  res.redirect(302, "/api/health");
+});
+
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
